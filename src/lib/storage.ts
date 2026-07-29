@@ -23,7 +23,7 @@ const fetchCloudRow = async (userId: string): Promise<CloudRow | null> => {
   const { data, error } = await supabase.from(TABLE_NAME).select("user_id, transactions, settings").eq("user_id", userId).maybeSingle();
 
   if (error) {
-    return null;
+    throw new Error(error.message);
   }
 
   return data as CloudRow | null;
@@ -34,7 +34,7 @@ const upsertCloudRow = async (userId: string, transactions: Transaction[], setti
     return;
   }
 
-  await supabase.from(TABLE_NAME).upsert(
+  const { error } = await supabase.from(TABLE_NAME).upsert(
     {
       user_id: userId,
       transactions,
@@ -43,6 +43,10 @@ const upsertCloudRow = async (userId: string, transactions: Transaction[], setti
     },
     { onConflict: "user_id" }
   );
+
+  if (error) {
+    throw new Error(error.message);
+  }
 };
 
 export const loadTransactions = (): Transaction[] => [];
