@@ -21,18 +21,27 @@ const App = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [settings, setSettings] = useState(defaultSettings);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [authActionError, setAuthActionError] = useState<string | null>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const settingsReady = useRef(false);
 
   useEffect(() => {
     let active = true;
     const hydrateSettings = async () => {
-      const next = await loadSettingsForUser(auth.user?.id ?? null);
-      if (!active) {
-        return;
+      try {
+        const next = await loadSettingsForUser(auth.user?.id ?? null);
+        if (!active) {
+          return;
+        }
+        setSettings(next);
+        setSettingsError(null);
+        settingsReady.current = true;
+      } catch (error) {
+        if (active) {
+          setSettingsError(error instanceof Error ? error.message : "Failed to load cloud settings.");
+        }
       }
-      setSettings(next);
-      settingsReady.current = true;
     };
 
     settingsReady.current = false;
@@ -46,11 +55,13 @@ const App = () => {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", settings.theme === "dark");
 
-    if (!settingsReady.current) {
+    if (!settingsReady.current || !auth.user?.id) {
       return;
     }
 
-    saveSettingsForUser(auth.user?.id ?? null, settings).catch(() => undefined);
+    saveSettingsForUser(auth.user.id, settings)
+      .then(() => setSettingsError(null))
+      .catch((error) => setSettingsError(error instanceof Error ? error.message : "Failed to save cloud settings."));
   }, [auth.user?.id, settings]);
 
   const heading = useMemo(() => {
@@ -87,7 +98,14 @@ const App = () => {
               <LoaderCircle size={16} className="animate-spin" />
             </Button>
           ) : auth.isAuthenticated ? (
-            <Button size="icon" variant="outline" onClick={() => signOut()} aria-label="Sign out">
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => {
+                signOut().catch((error) => setAuthActionError(error instanceof Error ? error.message : "Sign out failed."));
+              }}
+              aria-label="Sign out"
+            >
               <LogOut size={16} />
             </Button>
           ) : null}
@@ -111,7 +129,14 @@ const App = () => {
         <Card className="mb-3 space-y-2 border-primary/30 bg-primary/5 p-3">
           <p className="text-sm font-semibold">Sign in to access your cloud data</p>
           <p className="text-xs text-muted-foreground">Your transactions and settings are loaded from database and saved back automatically.</p>
-          <Button className="w-full" size="lg" onClick={() => signInWithGoogle()}>
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={() => {
+              setAuthActionError(null);
+              signInWithGoogle().catch((error) => setAuthActionError(error instanceof Error ? error.message : "Sign in failed."));
+            }}
+          >
             <LogIn size={16} className="mr-2" />
             Continue with Google
           </Button>
@@ -120,7 +145,13 @@ const App = () => {
 
       {data.syncing ? <Card className="mb-3 py-2 text-center text-xs text-muted-foreground">Loading cloud data...</Card> : null}
 
+      {auth.authError || authActionError ? (
+        <Card className="mb-3 py-2 text-center text-xs text-pay">Auth error: {auth.authError ?? authActionError}</Card>
+      ) : null}
+
       {data.syncError ? <Card className="mb-3 py-2 text-center text-xs text-pay">Cloud sync error: {data.syncError}</Card> : null}
+
+      {settingsError ? <Card className="mb-3 py-2 text-center text-xs text-pay">Settings sync error: {settingsError}</Card> : null}
 
       {showSkeleton ? (
         <div className="space-y-3">
