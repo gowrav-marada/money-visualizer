@@ -1,5 +1,5 @@
 import { LoaderCircle, LogIn, LogOut, MoonStar, Plus, SunMedium } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BottomNav, TabKey } from "../components/BottomNav";
 import { AnalyticsView } from "../components/AnalyticsView";
 import { DashboardView } from "../components/DashboardView";
@@ -10,7 +10,7 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { signInWithGoogle, signOut, useAuth } from "../hooks/useAuth";
 import { useMoneyData } from "../hooks/useMoneyData";
-import { loadSettings, saveSettings } from "../lib/storage";
+import { defaultSettings, loadSettingsForUser, saveSettingsForUser } from "../lib/storage";
 import { cn } from "../lib/utils";
 import { Transaction } from "../types";
 
@@ -20,13 +20,38 @@ const App = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
-  const [theme, setTheme] = useState<"light" | "dark">(() => loadSettings().theme);
+  const [settings, setSettings] = useState(defaultSettings);
   const [showSkeleton, setShowSkeleton] = useState(false);
+  const settingsReady = useRef(false);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    saveSettings({ ...loadSettings(), theme });
-  }, [theme]);
+    let active = true;
+    const hydrateSettings = async () => {
+      const next = await loadSettingsForUser(auth.user?.id ?? null);
+      if (!active) {
+        return;
+      }
+      setSettings(next);
+      settingsReady.current = true;
+    };
+
+    settingsReady.current = false;
+    hydrateSettings();
+
+    return () => {
+      active = false;
+    };
+  }, [auth.user?.id]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", settings.theme === "dark");
+
+    if (!settingsReady.current) {
+      return;
+    }
+
+    saveSettingsForUser(auth.user?.id ?? null, settings).catch(() => undefined);
+  }, [auth.user?.id, settings]);
 
   const heading = useMemo(() => {
     if (activeTab === "dashboard") return "Money Visualizer";
@@ -65,19 +90,35 @@ const App = () => {
             <Button size="icon" variant="outline" onClick={() => signOut()} aria-label="Sign out">
               <LogOut size={16} />
             </Button>
-          ) : (
-            <Button size="icon" variant="outline" onClick={() => signInWithGoogle()} aria-label="Sign in with Google" disabled={!auth.hasSupabaseConfig}>
-              <LogIn size={16} />
-            </Button>
-          )}
+          ) : null}
 
-          <Button size="icon" variant="outline" onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}>
-            {theme === "dark" ? <SunMedium size={16} /> : <MoonStar size={16} />}
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() =>
+              setSettings((prev) => ({
+                ...prev,
+                theme: prev.theme === "dark" ? "light" : "dark"
+              }))
+            }
+          >
+            {settings.theme === "dark" ? <SunMedium size={16} /> : <MoonStar size={16} />}
           </Button>
         </div>
       </header>
 
-      {data.syncing ? <Card className="mb-3 py-2 text-center text-xs text-muted-foreground">Syncing data across devices...</Card> : null}
+      {!auth.authLoading && !auth.isAuthenticated && auth.hasSupabaseConfig ? (
+        <Card className="mb-3 space-y-2 border-primary/30 bg-primary/5 p-3">
+          <p className="text-sm font-semibold">Sign in to access your cloud data</p>
+          <p className="text-xs text-muted-foreground">Your transactions and settings are loaded from database and saved back automatically.</p>
+          <Button className="w-full" size="lg" onClick={() => signInWithGoogle()}>
+            <LogIn size={16} className="mr-2" />
+            Continue with Google
+          </Button>
+        </Card>
+      ) : null}
+
+      {data.syncing ? <Card className="mb-3 py-2 text-center text-xs text-muted-foreground">Loading cloud data...</Card> : null}
 
       {showSkeleton ? (
         <div className="space-y-3">

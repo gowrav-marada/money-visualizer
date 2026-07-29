@@ -1,8 +1,6 @@
 import { AppSettings, Transaction } from "../types";
 import { supabase } from "./supabase";
 
-const TX_KEY = "money-visualizer.transactions.v1";
-const SETTINGS_KEY = "money-visualizer.settings.v1";
 const TABLE_NAME = "money_user_data";
 
 export const defaultSettings: AppSettings = {
@@ -15,41 +13,6 @@ type CloudRow = {
   transactions: Transaction[];
   settings: AppSettings;
   updated_at?: string;
-};
-
-const loadLocalTransactions = (): Transaction[] => {
-  try {
-    const raw = localStorage.getItem(TX_KEY);
-    if (!raw) {
-      return [];
-    }
-
-    return JSON.parse(raw) as Transaction[];
-  } catch {
-    return [];
-  }
-};
-
-const saveLocalTransactions = (_transactions: Transaction[]) => {
-  return;
-};
-
-const loadLocalSettings = (): AppSettings => {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(defaultSettings));
-      return defaultSettings;
-    }
-
-    return { ...defaultSettings, ...(JSON.parse(raw) as AppSettings) };
-  } catch {
-    return defaultSettings;
-  }
-};
-
-const saveLocalSettings = (settings: AppSettings) => {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 };
 
 const fetchCloudRow = async (userId: string): Promise<CloudRow | null> => {
@@ -84,14 +47,14 @@ const upsertCloudRow = async (userId: string, transactions: Transaction[], setti
 
 export const loadTransactions = (): Transaction[] => [];
 
-export const saveTransactions = (transactions: Transaction[]) => {
-  saveLocalTransactions(transactions);
+export const saveTransactions = (_transactions: Transaction[]) => {
+  return;
 };
 
-export const loadSettings = (): AppSettings => loadLocalSettings();
+export const loadSettings = (): AppSettings => defaultSettings;
 
-export const saveSettings = (settings: AppSettings) => {
-  saveLocalSettings(settings);
+export const saveSettings = (_settings: AppSettings) => {
+  return;
 };
 
 export const loadTransactionsForUser = async (userId: string | null): Promise<Transaction[]> => {
@@ -100,11 +63,7 @@ export const loadTransactionsForUser = async (userId: string | null): Promise<Tr
   }
 
   const cloud = await fetchCloudRow(userId);
-  if (cloud?.transactions?.length) {
-    return cloud.transactions;
-  }
-
-  return [];
+  return cloud?.transactions ?? [];
 };
 
 export const saveTransactionsForUser = async (userId: string | null, transactions: Transaction[]) => {
@@ -113,35 +72,26 @@ export const saveTransactionsForUser = async (userId: string | null, transaction
   }
 
   const cloud = await fetchCloudRow(userId);
-  const settings = cloud?.settings ? { ...defaultSettings, ...cloud.settings } : loadLocalSettings();
+  const settings = cloud?.settings ? { ...defaultSettings, ...cloud.settings } : defaultSettings;
   await upsertCloudRow(userId, transactions, settings);
 };
 
 export const loadSettingsForUser = async (userId: string | null): Promise<AppSettings> => {
-  const local = loadLocalSettings();
-
   if (!userId) {
-    return local;
+    return defaultSettings;
   }
 
   const cloud = await fetchCloudRow(userId);
-  if (cloud?.settings) {
-    const merged = { ...defaultSettings, ...cloud.settings };
-    saveLocalSettings(merged);
-    return merged;
-  }
-
-  return local;
+  return cloud?.settings ? { ...defaultSettings, ...cloud.settings } : defaultSettings;
 };
 
 export const saveSettingsForUser = async (userId: string | null, settings: AppSettings) => {
-  saveLocalSettings(settings);
-
   if (!userId) {
     return;
   }
 
-  const transactions = loadLocalTransactions();
+  const cloud = await fetchCloudRow(userId);
+  const transactions = cloud?.transactions ?? [];
   await upsertCloudRow(userId, transactions, settings);
 };
 
