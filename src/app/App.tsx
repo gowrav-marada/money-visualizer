@@ -120,6 +120,8 @@ const App = () => {
 
       {data.syncing ? <Card className="mb-3 py-2 text-center text-xs text-muted-foreground">Loading cloud data...</Card> : null}
 
+      {data.syncError ? <Card className="mb-3 py-2 text-center text-xs text-pay">Cloud sync error: {data.syncError}</Card> : null}
+
       {showSkeleton ? (
         <div className="space-y-3">
           <Card className="h-20 animate-pulse" />
