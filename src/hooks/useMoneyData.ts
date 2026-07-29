@@ -12,12 +12,10 @@ export interface TransactionFilters {
   category: string;
 }
 
-const nowMonth = monthKey(new Date().toISOString());
-
 const healthScore = (data: { receivable: number; payable: number; income: number; expenses: number }) => {
-  const liquidityRatio = data.payable === 0 ? 1.2 : Math.min(data.receivable / data.payable, 1.2);
-  const savingsRatio = data.income === 0 ? 0.2 : Math.min((data.income - data.expenses) / data.income, 1);
-  return Math.max(12, Math.min(98, Math.round((liquidityRatio * 45 + savingsRatio * 55) * 100 / 1.2)));
+  const liquidityRatio = data.payable === 0 ? 1.2 : Math.max(0, Math.min(data.receivable / data.payable, 1.2));
+  const savingsRatio = data.income === 0 ? 0.2 : Math.max(0, Math.min((data.income - data.expenses) / data.income, 1));
+  return Math.round((liquidityRatio / 1.2) * 45 + savingsRatio * 55);
 };
 
 export const useMoneyData = (userId: string | null) => {
@@ -140,6 +138,7 @@ export const useMoneyData = (userId: string | null) => {
   }, [filters, sortBy, sortDesc, transactions]);
 
   const metrics: FinancialMetrics = useMemo(() => {
+    const nowMonth = monthKey(new Date().toISOString());
     const totalReceivable = transactions
       .filter((tx) => tx.type === "borrowed" && tx.status !== "paid")
       .reduce((sum, tx) => sum + tx.amount, 0);
