@@ -10,61 +10,6 @@ export const defaultSettings: AppSettings = {
   voiceEntryEnabled: false
 };
 
-const seedTransactions: Transaction[] = [
-  {
-    id: crypto.randomUUID(),
-    type: "borrowed",
-    personName: "Arjun",
-    amount: 6800,
-    category: "Friends",
-    description: "Dinner split",
-    dueDate: new Date(Date.now() + 3 * 24 * 3600000).toISOString(),
-    date: new Date().toISOString(),
-    status: "pending",
-    notes: "Send reminder tomorrow",
-    tags: ["food", "weekend"]
-  },
-  {
-    id: crypto.randomUUID(),
-    type: "lent",
-    personName: "Priya",
-    amount: 2200,
-    category: "Bills",
-    description: "Shared internet bill",
-    dueDate: new Date(Date.now() + 6 * 24 * 3600000).toISOString(),
-    date: new Date().toISOString(),
-    status: "pending",
-    notes: "Monthly settlement",
-    tags: ["utility"]
-  },
-  {
-    id: crypto.randomUUID(),
-    type: "income",
-    personName: "Acme Corp",
-    amount: 95000,
-    category: "Salary",
-    description: "Monthly salary credit",
-    dueDate: new Date().toISOString(),
-    date: new Date().toISOString(),
-    status: "paid",
-    notes: "Credited on time",
-    tags: ["salary"]
-  },
-  {
-    id: crypto.randomUUID(),
-    type: "expense",
-    personName: "Swiggy",
-    amount: 1450,
-    category: "Food",
-    description: "Groceries",
-    dueDate: new Date().toISOString(),
-    date: new Date().toISOString(),
-    status: "paid",
-    notes: "Weekly stock-up",
-    tags: ["home"]
-  }
-];
-
 type CloudRow = {
   user_id: string;
   transactions: Transaction[];
@@ -76,18 +21,17 @@ const loadLocalTransactions = (): Transaction[] => {
   try {
     const raw = localStorage.getItem(TX_KEY);
     if (!raw) {
-      localStorage.setItem(TX_KEY, JSON.stringify(seedTransactions));
-      return seedTransactions;
+      return [];
     }
 
     return JSON.parse(raw) as Transaction[];
   } catch {
-    return seedTransactions;
+    return [];
   }
 };
 
-const saveLocalTransactions = (transactions: Transaction[]) => {
-  localStorage.setItem(TX_KEY, JSON.stringify(transactions));
+const saveLocalTransactions = (_transactions: Transaction[]) => {
+  return;
 };
 
 const loadLocalSettings = (): AppSettings => {
@@ -138,7 +82,7 @@ const upsertCloudRow = async (userId: string, transactions: Transaction[], setti
   );
 };
 
-export const loadTransactions = (): Transaction[] => loadLocalTransactions();
+export const loadTransactions = (): Transaction[] => [];
 
 export const saveTransactions = (transactions: Transaction[]) => {
   saveLocalTransactions(transactions);
@@ -151,29 +95,25 @@ export const saveSettings = (settings: AppSettings) => {
 };
 
 export const loadTransactionsForUser = async (userId: string | null): Promise<Transaction[]> => {
-  const local = loadLocalTransactions();
-
   if (!userId) {
-    return local;
+    return [];
   }
 
   const cloud = await fetchCloudRow(userId);
   if (cloud?.transactions?.length) {
-    saveLocalTransactions(cloud.transactions);
     return cloud.transactions;
   }
 
-  return local;
+  return [];
 };
 
 export const saveTransactionsForUser = async (userId: string | null, transactions: Transaction[]) => {
-  saveLocalTransactions(transactions);
-
   if (!userId) {
     return;
   }
 
-  const settings = loadLocalSettings();
+  const cloud = await fetchCloudRow(userId);
+  const settings = cloud?.settings ? { ...defaultSettings, ...cloud.settings } : loadLocalSettings();
   await upsertCloudRow(userId, transactions, settings);
 };
 
@@ -205,15 +145,6 @@ export const saveSettingsForUser = async (userId: string | null, settings: AppSe
   await upsertCloudRow(userId, transactions, settings);
 };
 
-export const migrateLocalToCloud = async (userId: string | null) => {
-  if (!userId) {
-    return;
-  }
-
-  const cloud = await fetchCloudRow(userId);
-  if (cloud?.transactions?.length) {
-    return;
-  }
-
-  await upsertCloudRow(userId, loadLocalTransactions(), loadLocalSettings());
+export const migrateLocalToCloud = async (_userId: string | null) => {
+  return;
 };
