@@ -31,6 +31,7 @@ export const useMoneyData = (userId: string | null) => {
   const [sortBy, setSortBy] = useState<SortField>("date");
   const [sortDesc, setSortDesc] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const hydrated = useRef(false);
 
   useEffect(() => {
@@ -38,12 +39,22 @@ export const useMoneyData = (userId: string | null) => {
 
     const hydrate = async () => {
       setSyncing(true);
-      await migrateLocalToCloud(userId);
-      const next = await loadTransactionsForUser(userId);
-      if (active) {
-        setTransactions(next);
-        hydrated.current = true;
-        setSyncing(false);
+      try {
+        await migrateLocalToCloud(userId);
+        const next = await loadTransactionsForUser(userId);
+        if (active) {
+          setTransactions(next);
+          hydrated.current = true;
+          setSyncError(null);
+        }
+      } catch (error) {
+        if (active) {
+          setSyncError(error instanceof Error ? error.message : "Failed to load cloud data.");
+        }
+      } finally {
+        if (active) {
+          setSyncing(false);
+        }
       }
     };
 
@@ -59,7 +70,9 @@ export const useMoneyData = (userId: string | null) => {
       return;
     }
 
-    saveTransactionsForUser(userId, transactions).catch(() => undefined);
+    saveTransactionsForUser(userId, transactions)
+      .then(() => setSyncError(null))
+      .catch((error) => setSyncError(error instanceof Error ? error.message : "Failed to save cloud data."));
   }, [transactions, userId]);
 
   const addTransaction = (input: Omit<Transaction, "id">) => {
@@ -80,9 +93,15 @@ export const useMoneyData = (userId: string | null) => {
 
   const refresh = async () => {
     setSyncing(true);
-    const next = await loadTransactionsForUser(userId);
-    setTransactions(next);
-    setSyncing(false);
+    try {
+      const next = await loadTransactionsForUser(userId);
+      setTransactions(next);
+      setSyncError(null);
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "Failed to refresh cloud data.");
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const categories = useMemo(() => {
@@ -170,6 +189,7 @@ export const useMoneyData = (userId: string | null) => {
     removeTransaction,
     markPaid,
     refresh,
-    syncing
+    syncing,
+    syncError
   };
 };
