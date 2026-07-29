@@ -36,6 +36,7 @@ export const useMoneyData = (userId: string | null) => {
 
   useEffect(() => {
     let active = true;
+    hydrated.current = false;
 
     const hydrate = async () => {
       setSyncing(true);
@@ -49,6 +50,7 @@ export const useMoneyData = (userId: string | null) => {
         }
       } catch (error) {
         if (active) {
+          hydrated.current = false;
           setSyncError(error instanceof Error ? error.message : "Failed to load cloud data.");
         }
       } finally {
@@ -66,7 +68,7 @@ export const useMoneyData = (userId: string | null) => {
   }, [userId]);
 
   useEffect(() => {
-    if (!hydrated.current) {
+    if (!hydrated.current || !userId) {
       return;
     }
 
