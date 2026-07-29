@@ -9,12 +9,16 @@ export const signInWithGoogle = async () => {
 
   const redirectTo = `${window.location.origin}${window.location.pathname}`;
 
-  await supabase.auth.signInWithOAuth({
+  const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo
     }
   });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 };
 
 export const signOut = async () => {
@@ -22,7 +26,11 @@ export const signOut = async () => {
     return;
   }
 
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    throw new Error(error.message);
+  }
 };
 
 export const useAuth = () => {
