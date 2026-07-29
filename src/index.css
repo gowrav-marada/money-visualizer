@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 40% 98%;
+  --foreground: 228 30% 10%;
+  --card: 0 0% 100% / 0.7;
+  --card-foreground: 228 30% 10%;
+  --primary: 251 86% 61%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 226 25% 94%;
+  --muted-foreground: 226 16% 42%;
+  --border: 228 20% 85%;
+  --receive: 151 70% 45%;
+  --pay: 1 83% 62%;
+  --income: 212 92% 56%;
+  --expense: 30 95% 56%;
+}
+
+.dark {
+  --background: 228 35% 8%;
+  --foreground: 220 30% 96%;
+  --card: 222 40% 12% / 0.62;
+  --card-foreground: 220 30% 96%;
+  --primary: 251 90% 69%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 228 22% 16%;
+  --muted-foreground: 224 12% 68%;
+  --border: 226 22% 26%;
+}
+
+* {
+  @apply border-border;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background-image: radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.16), transparent 35%),
+    radial-gradient(circle at 85% 0%, rgba(56, 189, 248, 0.12), transparent 30%);
+}
+
+.glass {
+  @apply backdrop-blur-xl border bg-card shadow-glow;
+}
+
+.money-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.money-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .slide-up {
+    animation: slide-up 340ms ease-out;
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

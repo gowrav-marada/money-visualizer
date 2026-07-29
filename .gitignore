@@ -1,0 +1,58 @@
+# IDE and Editor Files
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# Node and NPM
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Build output
+dist/
+build/
+*.o
+*.a
+*.so
+
+# Environment variables
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Dependencies (if using any)
+vendor/
+composer.lock
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
