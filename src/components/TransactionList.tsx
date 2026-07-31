@@ -14,7 +14,6 @@ export const TransactionList = ({
   setSortBy,
   sortDesc,
   setSortDesc,
-  onMarkPaid,
   onEdit,
   onDelete,
   onRefresh
@@ -27,7 +26,6 @@ export const TransactionList = ({
   setSortBy: Dispatch<SetStateAction<SortField>>;
   sortDesc: boolean;
   setSortDesc: Dispatch<SetStateAction<boolean>>;
-  onMarkPaid: (id: string) => void;
   onEdit: (item: Transaction) => void;
   onDelete: (id: string) => void;
   onRefresh: () => void;
@@ -77,7 +75,7 @@ export const TransactionList = ({
             onChange={(e) => setFilters((prev) => ({ ...prev, query: e.target.value }))}
           />
         </div>
-        <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="grid grid-cols-2 gap-2 text-xs">
           <select
             value={filters.type}
             onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value as TransactionFilters["type"] }))}
@@ -88,16 +86,6 @@ export const TransactionList = ({
             <option value="lent">Lent</option>
             <option value="income">Income</option>
             <option value="expense">Expense</option>
-          </select>
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value as TransactionFilters["status"] }))}
-            className="rounded-xl border border-border bg-card px-2 py-2"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="paid">Paid</option>
-            <option value="overdue">Overdue</option>
           </select>
           <select
             value={filters.category}
@@ -133,7 +121,7 @@ export const TransactionList = ({
         <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">No transactions match current filters.</div>
       ) : (
         transactions.map((item) => (
-          <TransactionCard key={item.id} item={item} onMarkPaid={onMarkPaid} onEdit={onEdit} onDelete={onDelete} />
+          <TransactionCard key={item.id} item={item} onEdit={onEdit} onDelete={onDelete} />
         ))
       )}
     </div>
