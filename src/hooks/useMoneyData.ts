@@ -30,10 +30,11 @@ export const useMoneyData = (userId: string | null) => {
   const [sortDesc, setSortDesc] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
-  const hydrated = useRef(false);
+  const hydratedUserId = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
     let active = true;
+    hydratedUserId.current = undefined;
 
     const hydrate = async () => {
       setSyncing(true);
@@ -42,7 +43,7 @@ export const useMoneyData = (userId: string | null) => {
         const next = await loadTransactionsForUser(userId);
         if (active) {
           setTransactions(next);
-          hydrated.current = true;
+          hydratedUserId.current = userId;
           setSyncError(null);
         }
       } catch (error) {
@@ -64,7 +65,7 @@ export const useMoneyData = (userId: string | null) => {
   }, [userId]);
 
   useEffect(() => {
-    if (!hydrated.current) {
+    if (hydratedUserId.current !== userId) {
       return;
     }
 
