@@ -21,17 +21,14 @@ const badgeByType = {
 
 export const TransactionCard = ({
   item,
-  onMarkPaid,
   onEdit,
   onDelete
 }: {
   item: Transaction;
-  onMarkPaid: (id: string) => void;
   onEdit: (item: Transaction) => void;
   onDelete: (id: string) => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const touchX = useRef<number | null>(null);
   const longPressTimer = useRef<number | null>(null);
 
   const clearLongPress = () => {
@@ -48,25 +45,13 @@ export const TransactionCard = ({
   return (
     <Card
       className="space-y-3 transition hover:scale-[1.01]"
-      onTouchStart={(e) => {
-        touchX.current = e.changedTouches[0].clientX;
+      onTouchStart={() => {
         longPressTimer.current = window.setTimeout(() => {
           setExpanded(true);
           vibrate(40);
         }, 500);
       }}
-      onTouchEnd={(e) => {
-        clearLongPress();
-        const startX = touchX.current;
-        if (startX === null) {
-          return;
-        }
-        const deltaX = e.changedTouches[0].clientX - startX;
-        if (deltaX > 90 && item.status !== "paid") {
-          onMarkPaid(item.id);
-          vibrate(25);
-        }
-      }}
+      onTouchEnd={clearLongPress}
       onMouseDown={() => {
         longPressTimer.current = window.setTimeout(() => setExpanded(true), 500);
       }}
@@ -89,9 +74,7 @@ export const TransactionCard = ({
       <div className="flex flex-wrap gap-2">
         <Badge className={badgeByType[item.type]}>{item.type}</Badge>
         <Badge className="border-border bg-muted text-muted-foreground">Due: {formatDate(item.dueDate)}</Badge>
-        <Badge className={item.status === "paid" ? "border-receive/40 bg-receive/10 text-receive" : "border-pay/30 bg-pay/10 text-pay"}>
-          {item.status}
-        </Badge>
+        <Badge className="border-pay/30 bg-pay/10 text-pay">{item.status}</Badge>
       </div>
 
       <button type="button" className="w-full text-left text-sm text-muted-foreground" onClick={() => setExpanded((v) => !v)}>
