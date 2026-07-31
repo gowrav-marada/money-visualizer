@@ -10,8 +10,8 @@ export const getMonthlySeries = (transactions: Transaction[]) => {
 
     if (tx.type === "income") current.income += tx.amount;
     if (tx.type === "expense") current.expense += tx.amount;
-    if (tx.type === "borrowed" && tx.status !== "paid") current.receivable += tx.amount;
-    if (tx.type === "lent" && tx.status !== "paid") current.payable += tx.amount;
+    if (tx.type === "borrowed") current.receivable += tx.amount;
+    if (tx.type === "lent") current.payable += tx.amount;
 
     bucket.set(key, current);
   }
@@ -31,11 +31,11 @@ export const categoryBreakdown = (transactions: Transaction[]) => {
 
 export const receivableVsPayable = (transactions: Transaction[]) => {
   const receivable = transactions
-    .filter((tx) => tx.type === "borrowed" && tx.status !== "paid")
+    .filter((tx) => tx.type === "borrowed")
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const payable = transactions
-    .filter((tx) => tx.type === "lent" && tx.status !== "paid")
+    .filter((tx) => tx.type === "lent")
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   return [
@@ -48,7 +48,7 @@ export const topCounterparties = (transactions: Transaction[], type: "borrowed" 
   const bucket = new Map<string, number>();
 
   transactions
-    .filter((tx) => tx.type === type && tx.status !== "paid")
+    .filter((tx) => tx.type === type)
     .forEach((tx) => bucket.set(tx.personName, (bucket.get(tx.personName) ?? 0) + tx.amount));
 
   return Array.from(bucket.entries())
