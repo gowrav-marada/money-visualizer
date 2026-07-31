@@ -173,7 +173,6 @@ const App = () => {
           setSortBy={data.setSortBy}
           sortDesc={data.sortDesc}
           setSortDesc={data.setSortDesc}
-          onMarkPaid={data.markPaid}
           onEdit={(item) => {
             setEditing(item);
             setShowAdd(true);
