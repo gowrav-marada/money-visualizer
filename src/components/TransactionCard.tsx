@@ -107,12 +107,9 @@ export const TransactionCard = ({
               Open Receipt
             </a>
           ) : null}
-          <div className="grid grid-cols-3 gap-2 pt-1">
+          <div className="grid grid-cols-2 gap-2 pt-1">
             <Button size="sm" variant="outline" onClick={() => onEdit(item)}>
               Edit
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => onMarkPaid(item.id)}>
-              Paid
             </Button>
             <Button size="sm" variant="danger" onClick={() => onDelete(item.id)}>
               Delete
