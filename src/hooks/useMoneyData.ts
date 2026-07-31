@@ -1,21 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadTransactions, loadTransactionsForUser, migrateLocalToCloud, saveTransactionsForUser } from "../lib/storage";
 import { monthKey } from "../lib/utils";
-import { FinancialMetrics, PaymentStatus, Transaction, TransactionType } from "../types";
+import { FinancialMetrics, Transaction, TransactionType } from "../types";
 
 export type SortField = "amount" | "date" | "person" | "dueDate";
 
 export interface TransactionFilters {
   query: string;
   type: "all" | TransactionType;
-  status: "all" | PaymentStatus;
   category: string;
 }
 
+const nowMonth = monthKey(new Date().toISOString());
+
 const healthScore = (data: { receivable: number; payable: number; income: number; expenses: number }) => {
-  const liquidityRatio = data.payable === 0 ? 1.2 : Math.max(0, Math.min(data.receivable / data.payable, 1.2));
-  const savingsRatio = data.income === 0 ? 0.2 : Math.max(0, Math.min((data.income - data.expenses) / data.income, 1));
-  return Math.round((liquidityRatio / 1.2) * 45 + savingsRatio * 55);
+  const liquidityRatio = data.payable === 0 ? 1.2 : Math.min(data.receivable / data.payable, 1.2);
+  const savingsRatio = data.income === 0 ? 0.2 : Math.min((data.income - data.expenses) / data.income, 1);
+  return Math.max(12, Math.min(98, Math.round((liquidityRatio * 45 + savingsRatio * 55) * 100 / 1.2)));
 };
 
 export const useMoneyData = (userId: string | null) => {
@@ -23,7 +24,6 @@ export const useMoneyData = (userId: string | null) => {
   const [filters, setFilters] = useState<TransactionFilters>({
     query: "",
     type: "all",
-    status: "all",
     category: "all"
   });
   const [sortBy, setSortBy] = useState<SortField>("date");
@@ -34,7 +34,6 @@ export const useMoneyData = (userId: string | null) => {
 
   useEffect(() => {
     let active = true;
-    hydrated.current = false;
 
     const hydrate = async () => {
       setSyncing(true);
@@ -48,7 +47,6 @@ export const useMoneyData = (userId: string | null) => {
         }
       } catch (error) {
         if (active) {
-          hydrated.current = false;
           setSyncError(error instanceof Error ? error.message : "Failed to load cloud data.");
         }
       } finally {
@@ -66,7 +64,7 @@ export const useMoneyData = (userId: string | null) => {
   }, [userId]);
 
   useEffect(() => {
-    if (!hydrated.current || !userId) {
+    if (!hydrated.current) {
       return;
     }
 
@@ -85,10 +83,6 @@ export const useMoneyData = (userId: string | null) => {
 
   const removeTransaction = (id: string) => {
     setTransactions((prev) => prev.filter((tx) => tx.id !== id));
-  };
-
-  const markPaid = (id: string) => {
-    updateTransaction(id, { status: "paid" });
   };
 
   const refresh = async () => {
@@ -118,9 +112,8 @@ export const useMoneyData = (userId: string | null) => {
         tx.description.toLowerCase().includes(query) ||
         tx.tags.some((tag) => tag.toLowerCase().includes(query));
       const matchesType = filters.type === "all" || tx.type === filters.type;
-      const matchesStatus = filters.status === "all" || tx.status === filters.status;
       const matchesCategory = filters.category === "all" || tx.category === filters.category;
-      return matchesQuery && matchesType && matchesStatus && matchesCategory;
+      return matchesQuery && matchesType && matchesCategory;
     });
 
     return [...base].sort((a, b) => {
@@ -138,13 +131,12 @@ export const useMoneyData = (userId: string | null) => {
   }, [filters, sortBy, sortDesc, transactions]);
 
   const metrics: FinancialMetrics = useMemo(() => {
-    const nowMonth = monthKey(new Date().toISOString());
     const totalReceivable = transactions
-      .filter((tx) => tx.type === "borrowed" && tx.status !== "paid")
+      .filter((tx) => tx.type === "borrowed")
       .reduce((sum, tx) => sum + tx.amount, 0);
 
     const totalPayable = transactions
-      .filter((tx) => tx.type === "lent" && tx.status !== "paid")
+      .filter((tx) => tx.type === "lent")
       .reduce((sum, tx) => sum + tx.amount, 0);
 
     const monthlyIncome = transactions
@@ -188,7 +180,6 @@ export const useMoneyData = (userId: string | null) => {
     addTransaction,
     updateTransaction,
     removeTransaction,
-    markPaid,
     refresh,
     syncing,
     syncError
