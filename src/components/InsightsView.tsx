@@ -6,7 +6,6 @@ import { Card } from "./ui/card";
 
 export const InsightsView = ({ transactions }: { transactions: Transaction[] }) => {
   const upcoming = transactions
-    .filter((tx) => tx.status !== "paid")
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 3);
 
