@@ -8,12 +8,20 @@ export const defaultSettings: AppSettings = {
   voiceEntryEnabled: false
 };
 
+type StoredTransaction = Omit<Transaction, "status"> & { status?: string };
+
 type CloudRow = {
   user_id: string;
-  transactions: Transaction[];
+  transactions: StoredTransaction[];
   settings: AppSettings;
   updated_at?: string;
 };
+
+const normalizeTransactions = (transactions: StoredTransaction[]): Transaction[] =>
+  transactions.map((transaction) => ({
+    ...transaction,
+    status: transaction.status === "overdue" ? "overdue" : "pending"
+  }));
 
 const fetchCloudRow = async (userId: string): Promise<CloudRow | null> => {
   if (!supabase) {
@@ -67,7 +75,7 @@ export const loadTransactionsForUser = async (userId: string | null): Promise<Tr
   }
 
   const cloud = await fetchCloudRow(userId);
-  return cloud?.transactions ?? [];
+  return normalizeTransactions(cloud?.transactions ?? []);
 };
 
 export const saveTransactionsForUser = async (userId: string | null, transactions: Transaction[]) => {
@@ -95,7 +103,7 @@ export const saveSettingsForUser = async (userId: string | null, settings: AppSe
   }
 
   const cloud = await fetchCloudRow(userId);
-  const transactions = cloud?.transactions ?? [];
+  const transactions = normalizeTransactions(cloud?.transactions ?? []);
   await upsertCloudRow(userId, transactions, settings);
 };
 
