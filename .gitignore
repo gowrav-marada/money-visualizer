@@ -13,7 +13,6 @@ Thumbs.db
 # Node and NPM
 node_modules/
 npm-debug.log*
-package-lock.json
 
 # Python
 __pycache__/
@@ -56,3 +55,11 @@ desktop.ini
 tmp/
 temp/
 *.tmp
+
+# Local application database
+backend/*.db
+
+obj/
+bin/
+.angular/
+backend/App_Data/

@@ -1,284 +1,112 @@
-# 💰 Money Visualizer
+# Money Visualizer
 
-A modern, interactive, mobile-friendly web application to track and visualize money transactions in Indian Rupees (₹). Track money you give, money you'll get, and get detailed analytics with beautiful charts and summaries.
+A colorful, responsive personal finance tracker with five tabs:
 
-## ✨ Features
+| Tab | Purpose |
+|---|---|
+| **Dashboard** | Net position, balance, income/expenses, receivables, bills, charts and alerts |
+| **Credits & Debits** | Money between you and other people, partial settlements, history, reminders |
+| **Expenses** | Personal income and spending, filters, trends, recurring entries, receipts, CSV export |
+| **Bills** | Card statements, utilities, subscriptions; payments; optional read-only email import |
+| **Settings** | Currency/format/theme, reminders, categories, accounts, PIN lock, backup, delete data |
 
-### 📊 Dashboard
-- **Summary Cards**: View total to give, total to get, and net balance at a glance
-- **Interactive Charts**: 
-  - Balance Overview (Doughnut Chart)
-  - Monthly Trends (Line Chart)
-- **Statistics**: Highest payment, average payment, total people, total transactions
+## Stack
 
-### 💳 Transaction Management
-- ✅ **Add Transactions**: Define person name, amount, type (Give/Get), date, and notes
-- ✏️ **Edit Transactions**: Modify any transaction details
-- 🗑️ **Delete Transactions**: Remove transactions with confirmation
-- 📅 **Date Tracking**: Track when each transaction occurred
+- **Frontend:** Angular 20 (standalone components, signals), custom SVG charts, light/dark themes
+- **Backend:** ASP.NET Core (.NET 10) Web API, EF Core
+- **Database:** SQLite (a single file: `backend/App_Data/moneyvis.db`, created automatically)
+- **Login:** Google sign-in (OpenID Connect)
 
-### 🔍 Advanced Filters & Search
-- **Filter by Person**: View transactions for specific people
-- **Filter by Type**: Show only "Give" or "Get" transactions
-- **Date Range Filter**: Filter by specific time periods
-- **Reset Filters**: Quickly clear all filters
+## Financial formulas
 
-### 📈 Analytics
-- **Person-wise Analysis**: Bar charts showing money dynamics with each person
-- **Detailed Summaries**: For each person, see total given, total to get, balance, and transaction count
-- **Balance Indicators**: Know instantly if someone owes you or if you owe them
+- Current balance = total income − personal expenses
+- Net receivables = remaining to receive − remaining to pay
+- Net financial position = current balance + net receivables − unpaid bills
 
-### 📋 Summary Reports
-- **Monthly Breakdown**: Detailed financial summaries organized by month
-- **Monthly Metrics**: Total to give, total to get, net balance, and transaction count per month
+Personal transactions, money owed between people, and bills are stored separately. Credit-card bill payments count as transfers, not new expenses, so card purchases are counted only once.
 
-### 📥 Data Export
-- **CSV Export**: Download all transactions in CSV format for spreadsheet analysis
-- **Date-stamped Files**: Exports automatically include the export date
+## Setup
 
-### 💾 Data Persistence
-- **Browser Storage**: All data is stored locally using browser localStorage
-- **No Sign-up Required**: All data stays on your device
-- **Persistent Access**: Your data persists even after closing the browser
+### 1. Prerequisites
 
-### 📱 Mobile Friendly
-- **Fully Responsive**: Works perfectly on phones, tablets, and desktops
-- **Touch Optimized**: Large buttons and easy-to-use interface for mobile
-- **No Horizontal Scroll**: Content adapts to all screen sizes
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [Node.js 20+](https://nodejs.org/)
+- Optional: `dotnet tool install --global dotnet-ef` (for creating new migrations)
 
-## 🚀 Quick Start
+### 2. Create Google login credentials
 
-### Option 1: Direct Access (No Installation)
-Simply open `index.html` in any modern web browser:
-- Chrome, Firefox, Safari, Edge all supported
-- Works offline after first load
+1. Open [Google Cloud Console](https://console.cloud.google.com/) → create or select a project.
+2. Go to **APIs & Services → OAuth consent screen**, choose **External**, fill in the app name and your email, and add yourself as a **test user**.
+3. Go to **APIs & Services → Credentials → Create credentials → OAuth client ID**, then choose **Web application**.
+4. Add **Authorized JavaScript origin**: `http://localhost:4200`
+5. Add **Authorized redirect URI**: `http://localhost:4200/signin-google`
+6. Copy the client ID and client secret.
 
-### Option 2: GitHub Pages Deployment
+### 3. Store the secrets (never in appsettings.json)
 
-#### Step 1: Create GitHub Repository
-1. Go to [GitHub.com](https://github.com)
-2. Sign in or create an account
-3. Create a new repository (any name, e.g., `money-visualizer`)
-4. Choose "Public" to make it accessible from anywhere
+From the repository root:
 
-#### Step 2: Push Code to GitHub
-```bash
-# Navigate to your project directory
-cd "C:\Users\232001\OneDrive - American Airlines, Inc\Desktop\Project\"
-
-# Initialize git repo (if not already done)
-git init
-
-# Add all files
-git add .
-
-# Commit changes
-git commit -m "Initial commit: Money Visualizer with enhanced features"
-
-# Add remote repository (replace USERNAME and REPO with your details)
-git remote add origin https://github.com/USERNAME/REPO.git
-
-# Push to GitHub
-git branch -M main
-git push -u origin main
+```powershell
+dotnet user-secrets --project .\backend init
+dotnet user-secrets --project .\backend set "Authentication:Google:ClientId" "your-client-id.apps.googleusercontent.com"
+dotnet user-secrets --project .\backend set "Authentication:Google:ClientSecret" "your-client-secret"
 ```
 
-#### Step 3: Enable GitHub Pages
-1. Go to your repository on GitHub
-2. Click **Settings** (top menu)
-3. Scroll to **Pages** section
-4. Under "Source", select **main** branch
-5. Click **Save**
-6. Your site will be published at: `https://USERNAME.github.io/REPO/`
+> If you leave the Google client ID empty, development mode uses a local sample user so you can try the app without signing in.
 
-#### Step 4: Access Anywhere
-Open `https://USERNAME.github.io/REPO/` from any device, anywhere in the world!
+### 4. Run the backend
 
-## 📖 Usage Guide
-
-### Adding a Transaction
-1. Go to **Dashboard** tab
-2. Scroll to "Add New Transaction" section
-3. Fill in:
-   - **Person's Name**: Who the transaction is with
-   - **Amount**: Transaction amount in Rupees
-   - **Type**: Select "I need to give" or "I will get"
-   - **Date**: When the transaction occurred (auto-fills today)
-   - **Description**: Optional notes
-4. Click **Add Transaction** button
-
-### Viewing Transactions
-- Go to **Transactions** tab
-- See all transactions in a list
-- Use filters to find specific transactions
-- Latest transactions appear first
-
-### Viewing Analytics
-- Go to **Analytics** tab
-- See person-wise bar chart comparison
-- View detailed summary for each person
-- Instantly see who owes you money
-
-### Getting Summary Reports
-- Go to **Summary** tab
-- View monthly financial breakdowns
-- See trends across months
-- Track give vs get patterns
-
-### Exporting Data
-- Go to **Transactions** tab
-- Click **Export CSV** button
-- Save file to your computer
-- Open in Excel or Google Sheets for further analysis
-
-## 🎯 Currency & Localization
-
-Currently configured for **Indian Rupees (₹)**. All amounts display with ₹ symbol and are in INR.
-
-To change currency:
-1. Open `index.html` in a text editor
-2. Find and replace: `₹` with your currency symbol (e.g., `$`, `€`, `£`)
-3. Save and reload
-
-## 🔒 Privacy & Security
-
-- ✅ **No Server Storage**: All data stays on your device
-- ✅ **No Sign-up Required**: No personal information collected
-- ✅ **No Tracking**: No analytics or cookies
-- ✅ **Offline Ready**: Works completely offline
-- ✅ **Local Control**: You control your data
-
-## ⚙️ Technical Details
-
-- **Frontend Technology**: HTML5, CSS3, JavaScript (Vanilla)
-- **Data Storage**: Browser localStorage (5-10MB capacity)
-- **Charts**: Chart.js library
-- **Icons**: Font Awesome
-- **Mobile Framework**: CSS Grid & Flexbox
-- **No Dependencies** to install: Just open the HTML file!
-
-## 🐛 Browser Compatibility
-
-- Chrome/Chromium 60+
-- Firefox 60+
-- Safari 12+
-- Edge 79+
-- Mobile browsers (iOS Safari, Chrome Mobile, Firefox Mobile)
-
-## 📝 Local Storage Data Format
-
-Transactions are stored as JSON:
-```json
-{
-  "id": 1234567890,
-  "personName": "John Doe",
-  "amount": 500,
-  "type": "give",
-  "description": "Lunch expense",
-  "date": "12/15/2024"
-}
+```powershell
+dotnet run --project .\backend
 ```
 
-## 🛣️ Roadmap
+The API runs at `http://localhost:5289`. On first start it creates the SQLite database, applies migrations and, in development, adds sample data.
 
-Future enhancements:
-- [ ] Dark mode theme
-- [ ] Multi-currency support
-- [ ] Cloud sync option
-- [ ] Mobile app native version
-- [ ] Recurring transactions
-- [ ] Category-wise breakdowns
-- [ ] Receipt attachment
-- [ ] Friend split management
+### 5. Run the frontend (second terminal)
 
-## ☁️ Supabase Cloud Sync Setup (Use Anywhere)
-
-### 1) Add environment variables
-Create `.env` in project root:
-
-- `VITE_SUPABASE_URL=your_supabase_project_url`
-- `VITE_SUPABASE_ANON_KEY=your_supabase_anon_key`
-
-### 2) Create table in Supabase SQL Editor
-```sql
-create table if not exists public.money_user_data (
-  user_id uuid primary key,
-  transactions jsonb not null default '[]'::jsonb,
-  settings jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now()
-);
+```powershell
+cd .\frontend
+npm install
+npm start
 ```
 
-### 3) Enable Google provider
-In Supabase dashboard:
-- Go to **Authentication > Providers > Google**
-- Enable Google provider
-- Add OAuth client ID and secret
-- Add redirect URL: `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
+Open **http://localhost:4200** and sign in with Google. The Angular dev server proxies `/api` and `/signin-google` to the backend, so cookies work on one origin.
 
-### 4) Row Level Security policy
-Enable RLS and allow users to access only their own row:
-```sql
-alter table public.money_user_data enable row level security;
+> If PowerShell blocks `npm`, use `npm.cmd install` and `npm.cmd start`.
 
-create policy "Users can read own data"
-on public.money_user_data
-for select
-using (auth.uid() = user_id);
+### 6. Optional: detect bills from email
 
-create policy "Users can insert own data"
-on public.money_user_data
-for insert
-with check (auth.uid() = user_id);
+Bill detection is read-only and always asks you to review before saving. It cannot read emails that have been permanently deleted.
 
-create policy "Users can update own data"
-on public.money_user_data
-for update
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+**Gmail:** in the same Google Cloud project, enable the **Gmail API**, add the scope `gmail.readonly` to the consent screen, and add redirect URI `http://localhost:4200/api/email/callback/Gmail`. Then run:
+
+```powershell
+dotnet user-secrets --project .\backend set "Email:Gmail:ClientId" "your-client-id"
+dotnet user-secrets --project .\backend set "Email:Gmail:ClientSecret" "your-client-secret"
 ```
 
-### 5) Run app
-- `npm.cmd install`
-- `npm.cmd run dev`
+**Outlook:** in [Microsoft Entra app registrations](https://entra.microsoft.com/), register an app for personal and work accounts. Add the **Web** redirect URI `http://localhost:4200/api/email/callback/Outlook` and the delegated Graph permission `Mail.Read`. Create a client secret, then run:
 
-When signed in with Google, the app syncs transactions/settings across devices. On first login, local data is migrated to cloud if no cloud record exists.
+```powershell
+dotnet user-secrets --project .\backend set "Email:Outlook:ClientId" "your-app-id"
+dotnet user-secrets --project .\backend set "Email:Outlook:ClientSecret" "your-secret"
+```
 
-## 💡 Tips & Tricks
+Then open **Bills → From email → Connect**, and choose **Sync now**.
 
-1. **Data Backup**: Periodically export CSV to back up your data
-2. **Multiple Devices**: Sign in with the same Google account for automatic sync
-3. **Clear Cache**: If something breaks, try clearing browser cache
-4. **Print Reports**: Use browser print function (Ctrl+P) to print summaries
-5. **URL Bookmark**: Bookmark the app URL for quick access
+## Useful commands
 
-## ❓ FAQ
+```powershell
+dotnet build .\backend                                   # build the API
+cd .\frontend; npx ng build                              # production frontend build
+cd .\backend; dotnet ef migrations add <Name> -o Data/Migrations   # after model changes
+```
 
-**Q: Will my data be lost if I clear browser cache?**
-A: Yes. The Clear All Data button is intentionally hidden to prevent accidents, but clearing browser cache or using private/incognito mode will clear data.
+To reset all data, stop the backend and delete `backend\App_Data\moneyvis.db`.
 
-**Q: Can I use this on multiple devices?**
-A: Yes. Configure Supabase, sign in with Google, and your data syncs automatically across devices.
+## Security notes
 
-**Q: Is internet required?**
-A: No. Once loaded, the app works completely offline. Internet is only needed for initial GitHub Pages access and to export data.
-
-**Q: How much data can I store?**
-A: Browser localStorage typically allows 5-10MB. That's roughly 50,000+ transactions.
-
-**Q: Can I share my data?**
-A: Export as CSV and share the file. The app doesn't have built-in sharing yet.
-
-## 📞 Support
-
-For issues or suggestions, feel free to create an issue in the GitHub repository or contact the developer.
-
-## 📄 License
-
-MIT License - Feel free to use, modify, and distribute!
-
----
-
-**Made with ❤️ for better money management**
-
-Last Updated: December 2024
+- Every record is scoped to the signed-in user.
+- API requests require the `X-Requested-With` header (CSRF protection), which the Angular app adds automatically.
+- Mailbox tokens are encrypted with ASP.NET Data Protection and are never included in backups.
+- For production, set secrets through environment variables (for example, `Authentication__Google__ClientId`), use HTTPS, and update the redirect URIs to your domain.
